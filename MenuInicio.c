@@ -136,24 +136,24 @@ if(opcion==2){
 		printf("\t\t-----------------------\n\n");
 		
 		printf("\tUsuario: ");
-		scanf("%s", &usuario);
+		scanf("%s", &usuario);//Obtiene nombre de usuario que ingresa el usuario
 		
 		printf("\tClave: ");
-		while(caracter = getch()){
-		if(caracter==13){
-			clave[i]='\0';
+		while(caracter = getch()){ //caracter almacena caracteres obtenidos en la funcion getch
+		if(caracter==13){ //Valida si el valor ingresado es igual a retorno del carro (enter)
+			clave[i]='\0'; //\0 indica fin de una linea de caracteres
 			break;
-		}else if(caracter==8){
-			if(i>0){
-			i--;
-			printf("\b \b"); 
+		}else if(caracter==8){ //Valida si el valor ingresado es igual a retroceso (delete)
+			if(i>0){ // los valores almacenados en i
+			i--; //Resta la cantidad de caracteres
+			printf("\b \b"); //Simula el retroceso o eliminacion de los caracteres ingresados
 			} 
 			
 		}else{
-			if(i < longitud){
-			printf("*");
-			clave[i]=caracter;
-			i++;
+			if(i < longitud){ //Valida que el numero de caracteres ingresados no sobrepase la longitud asignada 
+			printf("*");//Simula que oculta los caracteres ingresados en clave
+			clave[i]=caracter;//Almacena cada letra o caracter ingresadoen un arreglo
+			i++;//Suma la cantidad de caracteres ingresados
 			}
 		}
 		}
