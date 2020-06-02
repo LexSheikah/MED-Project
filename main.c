@@ -36,6 +36,10 @@ int validarMenuInicio(char opc);
 int validarMenuLectura(char opc);
 int validarMenuAdmin(char opc);
 void opcionInvalida(void);
+// Métodos para lectura de parrafos (lógica de negocio)
+int lectura(char opc);
+void guardarReporte(int cA, int cE, int cI, int cO, int cU, int cEspacio, int cComa, int cPuntoComa, int cPunto);
+void mostrarReportes(void);
 
 // Método principal del sistema
 int main() {
@@ -177,6 +181,7 @@ void iniciarSesion(void) {
 					usuario = actual; // Registrando al usuario loggeado
 
 					// Mostrando mensaje de Bienvenida
+					system("cls");
 					if ( usuario->role == 1) {
 						printf("\n Bienvenido %s (Usuario Local) \n", usuario->nombre);
 					} else if ( usuario->role == 2) {
@@ -227,10 +232,14 @@ void mostrarMenu(int menu){
 		printf("\n|----------------------------------------|");
 		printf("\n| 1. Búsqueda general                    |");
 		printf("\n| 2. Búsqueda personalizada              |");
-		if ( usuario ) { // Si existe un usuario local registrado
+		if ( usuario ) { // Si existe un usuario local loggeado
 			printf("\n| 3. Mostrar reportes anteriores         |");
 		}
-		printf("\n| 4. Cerrar sesión                       |");
+		if ( usuario ) { // Si existe un usuario local loggeado
+			printf("\n| 4. Cerrar sesión                       |");
+		} else {
+			printf("\n| 4. Salir                               |");
+		}
 		printf("\n|----------------------------------------|");
 		printf("\n\n Escoja una opción: ");
 		break;
@@ -242,6 +251,18 @@ void mostrarMenu(int menu){
 		printf("\n| 2. Eliminar usuario                    |");
 		printf("\n| 3. Cerrar sesión                       |");
 		printf("\n|----------------------------------------|");
+		printf("\n\n Escoja una opción: ");
+		break;
+	case 4: // Menú de búsqueda personalizada
+		printf("\n|------------------------------------------------------|");
+		printf("\n|                Búsqueda Personalizada                |");
+		printf("\n|------------------------------------------------------|");
+		printf("\n| 1. Buscar vocal A        || 6. Buscar Espacios       |");
+		printf("\n| 2. Buscar vocal E        || 7. Buscar Comas (,)      |");
+		printf("\n| 3. Buscar vocal I        || 8. Buscar Puntocomas (;) |");
+		printf("\n| 4. Buscar vocal O        || 9. Buscar Puntos (.)     |");
+		printf("\n| 5. Buscar vocal U        ||                          |");
+		printf("\n|------------------------------------------------------|");
 		printf("\n\n Escoja una opción: ");
 		break;
 	default:
@@ -294,15 +315,20 @@ int validarMenuInicio(char opc) {
 
 // Método para validar la opción seleccionada en el menú lectura
 int validarMenuLectura(char opc) {
+	char res; // Auxiliar para guardar respuesta del usuario
 	int repetir = 1; // 0: False, 1: True
 
 	// Verificando la opc selecionada
 	switch (opc) {
 		case '1':
-			// Busqueda general
+			lectura('G'); // Busqueda generalizada
 			break;
 		case '2':
 			// Busqueda personalizada
+			do {
+				mostrarMenu(4); // Mostrar menú de Busqueda personalizada
+				scanf("\n%c", &res); // Capturando la entrada del teclado
+			} while ( lectura(res) ); // Si se ingresa un valor invalido, lectura retornará TRUE
 			break;
 		case '3':
 			if( usuario ) { // Si existe un usuario local loggeado
@@ -350,6 +376,151 @@ int validarMenuAdmin(char opc) {
 void opcionInvalida(void) {
 		printf("\nOpción no disponible. Por favor intente de nuevo\n");
 		system("pause"); // Hacer una pausa en el sistema
+}
+
+// Método para analizar párrafos
+int lectura(char opc) {
+	FILE *fp = fopen("./files/source.txt", "r"); // Leyendo el archivo source.txt
+  int cA = 0, cE = 0, cI = 0, cO = 0, cU = 0; // Contadores de vocales
+  int cEspacio = 0, cComa = 0, cPuntoComa = 0, cPunto = 0; // Contadores de caracteres especiales
+  int repetir = 0; // 0: False, 1: True
+	char c, res; // Variables auxiliares
+
+	// Imprimiendo instrucciones
+	printf("\n|----------------------------------------|");
+	printf("\n|              Instrucciones             |");
+	printf("\n|----------------------------------------|");
+	printf("\n| Copiar el texto que se quiere analizar |");
+	printf("\n| en la ruta 'files/source.txt'          |");
+	printf("\n|----------------------------------------|\n\n");
+	system("pause");
+	system("cls");
+
+  // Imprimiendo párrafo
+	printf("\n|----------------------------------------|");
+	printf("\n|                 Lectura                |");
+	printf("\n|----------------------------------------|\n\n");
+
+	if (fp == NULL) { // Si el archivo no se puede leer o abrir
+		perror("El archivo no está disponible o está vacío\n");
+	} else {
+		// Recorriendo el archivo caracter por caracter
+		while ( (c = fgetc(fp)) != EOF ) { // Mientras no sea el final del archivo
+			printf("%c", c); // Imprimir caracter
+			switch (opc) {
+			case 'G':
+				// Búsqueda generalizada de caracteres
+				if ( c == 'a'|| c == 'A' ) cA++; // Aumentar contador de A
+				else if ( c == 'e' || c == 'E' ) cE++; // Aumentar contador de E
+				else if ( c == 'i' || c == 'I' ) cI++; // Aumentar contador de I
+				else if ( c == 'o' || c == 'O' ) cO++; // Aumentar contador de O
+				else if ( c == 'u' || c == 'U' ) cU++; // Aumentar contador de U
+				else if ( c == ' ' ) cEspacio++; // Aumentar contador de Espacios
+				else if ( c == ',' ) cComa++; // Aumentar contador de Comas
+				else if ( c == ';' ) cPuntoComa++; // Aumentar contador de PuntoComas
+				else if ( c == '.' ) cPunto++; // Aumentar contador de Puntos
+				break;
+			// Búsquedas personalizada de caracteres
+			case '1':
+				if ( c == 'a'|| c == 'A' ) cA++; // Aumentar contador de A
+				break;
+			case '2':
+				if ( c == 'e' || c == 'E' ) cE++; // Aumentar contador de E
+				break;
+			case '3':
+				if ( c == 'i' || c == 'I' ) cI++; // Aumentar contador de I
+				break;
+			case '4':
+				if ( c == 'o' || c == 'O' ) cO++; // Aumentar contador de O
+				break;
+			case '5':
+				if ( c == 'u' || c == 'U' ) cU++; // Aumentar contador de U
+				break;
+			case '6':
+				if ( c == ' ' ) cEspacio++; // Aumentar contador de Espacios
+				break;
+			case '7':
+				if ( c == ',' ) cComa++; // Aumentar contador de Comas
+				break;
+			case '8':
+				if ( c == ';' ) cPuntoComa++; // Aumentar contador de PuntoComas
+				break;
+			case '9':
+				if ( c == '.' ) cPunto++; // Aumentar contador de Puntos
+				break;
+			default:
+				repetir = 1;
+				break;
+			}
+		}
+		fclose(fp); // Cerrar el archivo source.txt
+
+		// Imprimiendo reporte
+		printf("\n\n");
+		printf("\n|----------------------------------------|");
+		printf("\n|                 Reporte                |");
+		printf("\n|----------------------------------------|\n\n");
+		switch (opc) {
+			case 'G':
+				printf("Total de <A>: %d\n", cA);
+				printf("Total de <E>: %d\n", cE);
+				printf("Total de <I>: %d\n", cI);
+				printf("Total de <O>: %d\n", cO);
+				printf("Total de <U>: %d\n", cU);
+				printf("Total de <Espacios en blanco ( )>: %d\n", cEspacio);
+				printf("Total de <Comas (,)>: %d\n", cComa);
+				printf("Total de <Punto Comas (;)>: %d\n", cPuntoComa);
+				printf("Total de <Puntos (.)>: %d\n\n", cPunto);
+				break;
+			case '1':
+				printf("Total de <A>: %d\n", cA);
+				break;
+			case '2':
+				printf("Total de <E>: %d\n", cE);
+				break;
+			case '3':
+				printf("Total de <I>: %d\n", cI);
+				break;
+			case '4':
+				printf("Total de <O>: %d\n", cO);
+				break;
+			case '5':
+				printf("Total de <U>: %d\n", cU);
+				break;
+			case '6':
+				printf("Total de <Espacios en blanco ( )>: %d\n", cEspacio);
+				break;
+			case '7':
+				printf("Total de <Comas (,)>: %d\n", cComa);
+				break;
+			case '8':
+				printf("Total de <Punto Comas (;)>: %d\n", cPuntoComa);
+				break;
+			case '9':
+				printf("Total de <Puntos (.)>: %d\n\n", cPunto);
+				break;
+		}
+
+		if( usuario ) { // Si hay un usuario loggeado
+			printf("\n¿Desea guardar el reporte? [S/N]: ");
+				scanf("\n%c", &res);
+				if (res == 's' || res == 'S'){
+					guardarReporte(cA, cE, cI, cO, cU, cEspacio, cComa, cPuntoComa, cPunto); // Guardar reporte
+				}
+		}
+	}
+	system("pausa"); // Haciendo una pausa en el sistema
+	return repetir; // Retorna 1 para retir y 0 para romper el ciclo
+}
+
+// Método para guardar reporte de los párrafos analizados
+void guardarReporte(int cA, int cE, int cI, int cO, int cU, int cEspacio, int cComa, int cPuntoComa, int cPunto) {
+	printf("\nReporte guardado exitosamente\n");
+}
+
+// Método para mostrar los repostes guardos
+void mostrarReportes(void) {
+
 }
 
 // void limpiarPantalla(void)
