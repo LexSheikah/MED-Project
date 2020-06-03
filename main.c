@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <time.h>
 // #include <ctype.h>
 // #include <conio.h>
 
@@ -108,7 +109,7 @@ void leerUsuarios(void) {
 		}
 	}
 	fclose(fp); // Cerrando el archivo login.txt
-	mostrarUsuarios();
+	// mostrarUsuarios(); // Mostrar usuarios del sistema
 }
 
 // Método para crear nuevos nodos tipo User
@@ -333,6 +334,7 @@ int validarMenuLectura(char opc) {
 		case '3':
 			if( usuario ) { // Si existe un usuario local loggeado
 				// Mostrar Reportes
+				mostrarReportes();
 			} else {
 				opcionInvalida(); // Mostrar msj de opción no disponible
 			}
@@ -505,7 +507,7 @@ int lectura(char opc) {
 			printf("\n¿Desea guardar el reporte? [S/N]: ");
 				scanf("\n%c", &res);
 				if (res == 's' || res == 'S'){
-					guardarReporte(cA, cE, cI, cO, cU, cEspacio, cComa, cPuntoComa, cPunto); // Guardar reporte
+					guardarReporte( cA, cE, cI, cO, cU, cEspacio, cComa, cPuntoComa, cPunto); // Guardar reporte
 				}
 		}
 	}
@@ -515,18 +517,113 @@ int lectura(char opc) {
 
 // Método para guardar reporte de los párrafos analizados
 void guardarReporte(int cA, int cE, int cI, int cO, int cU, int cEspacio, int cComa, int cPuntoComa, int cPunto) {
-	printf("\nReporte guardado exitosamente\n");
+	FILE *fp; // Puntero tipo FILE para almacenar el contenido del archivo
+	const char *reportes = "./files/reportes.txt"; // Nombre del archivo para reportes
+	time_t now; // variable tipo fecha
+	time(&now); // time() returns the current time of the system as a time_t value
+	struct tm *local = localtime(&now); // Calendar time
+	int dia = local->tm_mday;			// get day of month (1 to 31)
+	int mes = local->tm_mon + 1;   	// get month of year (0 to 11)
+	int anio = local->tm_year + 1900;	// get year since 1900
+
+	// Editando archivo reportes.txt
+	fp = fopen(reportes, "a"); // Si fopen no tiene permisos de escritura sobre el archivo, retornará NULL.
+  if( fp == NULL ) {
+    printf("No se puede escribir sobre el archivo 'reportes.txt'.\n");
+  } else {
+		// Escribiendo sobre el archivo fp el reporte
+		fprintf( fp, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n", cA, cE, cI, cO, cU, cEspacio, cComa, cPuntoComa, cPunto, dia, mes, anio );
+
+		fclose(fp); // fclose: Libera la memoria y guardando cambios en reportes.txt
+
+		printf("\nReporte guardado exitosamente\n");
+	}
 }
 
 // Método para mostrar los repostes guardos
 void mostrarReportes(void) {
+	// Declaración de variables
+	int cReporte = 0; // Contador de reportes
+	int cA = 0, cE = 0, cI = 0, cO = 0, cU = 0; // Contadores de vocales
+  int cEspacio = 0, cComa = 0, cPuntoComa = 0, cPunto = 0; // Contadores de caracteres especiales
+	int dia = 0, mes = 0, anio = 0;	// Variables para la fecha
 
+	FILE *fp = fopen("./files/reportes.txt", "r"); // Leyendo el archivo login.txt
+
+	if (fp == NULL) { // Si el archivo no se puede abrir o está vacío
+		perror(" Aún no se han guardado reportes\n");
+	} else {
+		// Leyendo cada una de las lineas del archivo
+		while( feof(fp) == 0 ){ // Mientra no se llegue al final del archivo
+			int celda = 0;
+			char linea[500];
+			char split[] = ";";
+			fscanf(fp," %[^\n]", linea); // Tomar todos los caracteres de la linea leída
+			char *valor = strtok( linea, split); // Guardar valores separardos por ";"
+
+			// Recorrer todos los valores separados
+			while( valor != NULL ){
+				switch(celda){ // Obtener cada valor repadado en la variable celda
+					case 0:
+						cA = atoi( valor ); // Asignando el valor obtenido para cA
+						break;
+					case 1:
+						cE = atoi( valor ); // Asignando el valor obtenido para cE
+						break;
+					case 2:
+						cI = atoi( valor ); // Asignando el valor obtenido para cI
+						break;
+					case 3:
+						cO = atoi( valor ); // Asignando el valor obtenido para cO
+						break;
+					case 4:
+						cU = atoi( valor ); // Asignando el valor obtenido para cU
+						break;
+					case 5:
+						cEspacio = atoi( valor ); // Asignando el valor obtenido para cEspacio
+						break;
+					case 6:
+						cComa = atoi( valor ); // Asignando el valor obtenido para cComa
+						break;
+					case 7:
+						cPuntoComa = atoi( valor ); // Asignando el valor obtenido para cPuntoComa
+						break;
+					case 8:
+						cPunto = atoi( valor ); // Asignando el valor obtenido para cPunto
+						break;
+					case 9:
+						dia = atoi( valor ); // Asignando el valor obtenido para dia
+						break;
+					case 10:
+						mes = atoi( valor ); // Asignando el valor obtenido para mes
+						break;
+					case 11:
+						anio = atoi( valor ); // Asignando el valor obtenido para anio
+						break;
+				}
+				valor = strtok(NULL,split); // Limpiando el valor separado
+				celda++; // Avanzando al siguiente valor separado
+			}
+			cReporte++; // Aumentado el contador de reportes
+
+			// Imprimiendo reportes
+			if( cReporte == 1) { // Imprimir titulo si es primera vez
+				printf("\n|----------------------------------------|");
+				printf("\n|           REPORTES GUARDADOS           |");
+				printf("\n|----------------------------------------|\n\n");
+			}
+			printf("-> Reporte %d | Fecha: %d/%d/%d \n", cReporte, dia, mes, anio);
+			printf("Total de <A>: %d\n", cA);
+			printf("Total de <E>: %d\n", cE);
+			printf("Total de <I>: %d\n", cI);
+			printf("Total de <O>: %d\n", cO);
+			printf("Total de <U>: %d\n", cU);
+			printf("Total de <Espacios en blanco ( )>: %d\n", cEspacio);
+			printf("Total de <Comas (,)>: %d\n", cComa);
+			printf("Total de <Punto Comas (;)>: %d\n", cPuntoComa);
+			printf("Total de <Puntos (.)>: %d\n\n", cPunto);
+		}
+	}
+	fclose(fp); // Cerrando el archivo login.txt
+	system("pause"); // Haciendo una pausa en la ejecución
 }
-
-// void limpiarPantalla(void)
-// {
-// 		printf("\n\n");
-// 		fflush(stdin);
-// 		system("pause");
-// 		system("cls");
-// }
