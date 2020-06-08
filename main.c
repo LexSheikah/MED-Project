@@ -27,8 +27,9 @@ USER *usuario = NULL;
 /* Creando los prototipos de las funciones */
 // Métodos de login
 void leerUsuarios(void);
-USER *agregarUsuario(NAME nombre, PASSWORD clave, ROLE role);
-void eliminarUsuario(NAME nombre);
+USER *crearUsuario(NAME nombre, PASSWORD clave, ROLE role);
+void agregarUsuario(void);
+void eliminarUsuario(void);
 void mostrarUsuarios(void);
 void iniciarSesion(void);
 // Métodos de menu
@@ -100,10 +101,10 @@ void leerUsuarios(void) {
 			}
 			// AGREGANDO USUARIO A LA LISTA ENLAZADA DE USUARIOS
 			if( primero == NULL ) { // Verficando si es el primer nodo de la lista
-				primero = agregarUsuario(nombre, clave, role); // Creando el primer nodo de la lista
+				primero = crearUsuario(nombre, clave, role); // Creando el primer nodo de la lista
 				ultimo = primero; // Creando el ultimo nodo de la lista
 			} else {
-				ultimo->siguiente = agregarUsuario(nombre, clave, role); // Agregar un nuevo nodo a la lista
+				ultimo->siguiente = crearUsuario(nombre, clave, role); // Agregar un nuevo nodo a la lista
 				ultimo = ultimo->siguiente; // Actualizando el ultimo nodo de la lista
 			}
 		}
@@ -113,7 +114,7 @@ void leerUsuarios(void) {
 }
 
 // Método para crear nuevos nodos tipo User
-USER *agregarUsuario(NAME nombre, PASSWORD clave, ROLE role) {
+USER *crearUsuario(NAME nombre, PASSWORD clave, ROLE role) {
   USER *nuevoUsuario; // Pointer de tipo USER
   nuevoUsuario = malloc( sizeof(USER)); // Asignando espacio de memoria para el Pointer
   nuevoUsuario->siguiente = NULL; // Evitar que el nodo siguiente apunte a cualquier lado
@@ -124,9 +125,166 @@ USER *agregarUsuario(NAME nombre, PASSWORD clave, ROLE role) {
   return nuevoUsuario; // Retornando el nuevo login
 }
 
+// Método para agregar usuarios nuevos a la lista enlazada
+void agregarUsuario(void) {
+	FILE *fp; // Puntero tipo FILE para almacenar el contenido del archivo
+	const char *login = "./files/login.txt"; // Nombre del archivo para login
+	USER *actual = NULL; // Noto tipo USER
+	NAME nombre; // Varible tipo NAME
+	PASSWORD clave1; // Varible tipo PASSWORD
+	PASSWORD clave2; // Varible tipo PASSWORD
+	ROLE role; // Variable tipo ROLE
+	int iguales = 1; // Bandera => 0: false, 1: true
+
+	system("cls"); // Limpiando la pantalla
+
+	// Titulo de la pantalla
+	printf("\n|----------------------------------------|");
+	printf("\n|              Usuario Nuevo             |");
+	printf("\n|----------------------------------------|\n");
+
+	// Capturando datos del usuario nuevo
+	printf("\nIngrese el nombre de usuario: ");
+	scanf("%24s", nombre);
+	REPASSWORD:
+	printf("Ingrese la contraseña: ");
+	scanf("%79s", clave1);
+	printf("Ingrese nuevamente la contraseña: ");
+	scanf("%79s", clave2);
+
+	// Comparando contraseñas
+	iguales = strcmp(clave1, clave2); // strcpm retorna 0 si son iguales
+
+	if ( iguales != 0 ) { // Si las contraseñas son diferentes
+		printf("\nLas contraseñas no coinciden. Por favor vuelva a intentar\n\n");
+		goto REPASSWORD;
+	}
+
+	REROLE:
+	printf("Ingrese el role del usuario, [1] Usuario local y [2] Administrador: ");
+	scanf("%d", &role);
+
+	if ( role != 1 && role != 2 ) { // Si rol no es ni 1 ni 2
+		printf("\nRole no disponible. Por favor vuelva a intentar\n\n");
+		goto REROLE;
+	}
+
+	// Agregando el nuevo usuario a la lista enlazada
+	actual = crearUsuario(nombre, clave1, role); // Crear un nodo nuevo
+	ultimo->siguiente = actual; // Enlazar al nuevo nodo con la lista
+	ultimo = actual; // Actualizar el nodo ultimo
+
+	// Agregando el nuevo usuario al archivo login.txt
+	fp = fopen(login, "a"); // Si fopen no tiene permisos de escritura sobre el archivo, retornará NULL.
+  if( fp == NULL ) {
+    printf("No se puede escribir sobre el archivo 'login.txt'.\n\n");
+  } else {
+		// Escribiendo sobre el archivo fp el nuevo usuario
+		fprintf( fp, "\n%s;%s;%d", nombre, clave1, role );
+
+		fclose(fp); // fclose: Libera la memoria y guardando cambios en reportes.txt
+
+		printf("\nUsuario guardado exitosamente\n\n");
+	}
+
+	system("pause");
+}
+
 // Método para eliminar nodos de la lista usuarios
-void eliminarUsuario(NAME nombre) {
+void eliminarUsuario(void) {
+	FILE *fp; // Puntero tipo FILE para almacenar el contenido del archivo
+	const char *login = "./files/login.txt"; // Nombre del archivo para login
+	USER *actual = primero; // Actual toma el valor del nodo inicial
+	USER *anterior = NULL; // Anterior toma el valor del nodo anterior al nodo actual
+	USER *userDelete = NULL; // userDelete toma el valor del nodo a elminar
+	NAME nombre; // Variable tipo Name
+	PASSWORD claveAdmin; // Variable tipo PASSWORD
+	int encontrar = 0, encontrado = 0;// Bandera => 0: false, 1: true
+	char res; // Auxiliar para guardar respuestas del usuario
+
 	// logica para eliminar usuario
+	system("cls"); // Limpiando la pantalla
+
+	// Titulo de la pantalla
+	printf("\n|----------------------------------------|");
+	printf("\n|            Eliminar Usuario            |");
+	printf("\n|----------------------------------------|\n");
+
+	// Capturando datos del usuario a eliminar
+	printf("\nIngrese el nombre de usuario a eliminar: ");
+	scanf("%24s", nombre);
+
+	// Recorrer la lista de usuario para verificar al usuario
+	while ( actual != NULL ) { // Mientras el nodo exista en la lista
+		// Buscando usuario (comparando nombres)
+		if ( strcmp( actual->nombre, nombre ) == 0 ) { // Si el usuario es encontrado
+			userDelete = actual; // Obteniendo los datos del usuario a eliminar
+
+			// Validando credenciales del administrador
+			REPASSADMIN:
+			printf("\nIngrese la clave de administrador: ");
+			scanf("%24s", claveAdmin);
+
+			if ( strcmp(usuario->clave, claveAdmin ) == 0 ) { //comparando la contrase�a de administrador
+				// Eliminando usuario de la lista enlazada
+				if ( userDelete == primero ) { // Si se elimina el primer nodo
+					primero = primero->siguiente; // Actualizando al nodo primero
+				} else if( userDelete == ultimo ) { // Si se elimina el ultimo nodo
+					ultimo = anterior; //  Actualizando al nodo ultimo
+					ultimo->siguiente = NULL; // Poniendo como null el nodo siguiente
+				} else { // Si se elimina cualquier nodo que no sea de los extremos de la lista
+					anterior->siguiente = actual->siguiente; // Sacando al nodo actual de la lista
+				}
+				free(actual); // Liberando la memoria utilizada por el nodo eliminado
+
+				printf("\nUsuario eliminado exitosamente\n\n");
+
+				// Actualizando el archivo login
+				actual = primero;
+				while ( actual != NULL ) {
+					if ( actual == primero ) {
+						// Agregar el primero elemento del archivo login.txt
+						fp = fopen(login, "w"); // Si fopen no tiene permisos de escritura sobre el archivo, retornará NULL.
+						if( fp == NULL ) {
+							printf("No se puede escribir sobre el archivo 'login.txt'.\n");
+						} else {
+							fprintf( fp, "%s;%s;%d", actual->nombre, actual->clave, actual->role ); // Escribiendo sobre el archivo fp
+							fclose(fp); // fclose: Libera la memoria y guardando cambios en reportes.txt
+						}
+					} else {
+						// Agregar más elementos al archivo login.txt
+						fp = fopen(login, "a"); // Si fopen no tiene permisos de escritura sobre el archivo, retornará NULL.
+						if( fp == NULL ) {
+							printf("No se puede escribir sobre el archivo 'login.txt'.\n");
+						} else {
+							fprintf( fp, "\n%s;%s;%d", actual->nombre, actual->clave, actual->role ); // Escribiendo sobre el archivo fp
+							fclose(fp); // fclose: Libera la memoria y guardando cambios en reportes.txt
+						}
+					}
+
+					actual = actual->siguiente; // Avanzando al siguiente nodo
+				}
+
+			} else { // Si la contraseña admin es incorrecta
+				printf("Clave incorrecta, desea intentar de nuevo? [S/N]: ");
+				scanf("\n%c", &res);
+				if ( res == 's' || res == 'S' ) {
+					goto REPASSADMIN;
+				}
+			}
+
+			actual = NULL; // Terminando la repeticion del While
+
+		} else { // Si el usuario no coincide
+				anterior = actual; // Guardando el registro del nodo anterior
+				actual = actual->siguiente; // Pasando al siguiente nodo de la lista
+		}
+	}
+		if( userDelete == NULL ) { // Si userDelete no existe
+			printf("\nEl nombre de usuario no se ha encontrado o es incorrecto\n");
+		}
+
+		system("pause");
 }
 
 // Método para mostrar la lista de usuarios
@@ -148,6 +306,8 @@ void mostrarUsuarios (void) {
 		}
     actual = actual->siguiente; // actual toma el valor del siguiente nodo
   }
+
+	system("pause");
 }
 
 // Método para iniciar sesión en el sistema
@@ -249,8 +409,9 @@ void mostrarMenu(int menu){
 		printf("\n|          ADMINISTRAR USUARIOS          |");
 		printf("\n|----------------------------------------|");
 		printf("\n| 1. Agregar usuario                     |");
-		printf("\n| 2. Eliminar usuario                    |");
-		printf("\n| 3. Cerrar sesión                       |");
+		printf("\n| 2. Mostrar usuarios                    |");
+		printf("\n| 3. Eliminar usuario                    |");
+		printf("\n| 4. Cerrar sesión                       |");
 		printf("\n|----------------------------------------|");
 		printf("\n\n Escoja una opción: ");
 		break;
@@ -357,12 +518,15 @@ int validarMenuAdmin(char opc) {
 	// Verificando la opc selecionada
 	switch (opc) {
 		case '1':
-			// Busqueda general
+			agregarUsuario();
 			break;
 		case '2':
-			// Busqueda personalizada
+			mostrarUsuarios();
 			break;
 		case '3':
+			eliminarUsuario();
+			break;
+		case '4':
 			// Cerrar sesión
 			repetir = 0;
 			break;
@@ -532,7 +696,7 @@ void guardarReporte(int cA, int cE, int cI, int cO, int cU, int cEspacio, int cC
     printf("No se puede escribir sobre el archivo 'reportes.txt'.\n");
   } else {
 		// Escribiendo sobre el archivo fp el reporte
-		fprintf( fp, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n", cA, cE, cI, cO, cU, cEspacio, cComa, cPuntoComa, cPunto, dia, mes, anio );
+		fprintf( fp, "\n%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d", cA, cE, cI, cO, cU, cEspacio, cComa, cPuntoComa, cPunto, dia, mes, anio );
 
 		fclose(fp); // fclose: Libera la memoria y guardando cambios en reportes.txt
 
